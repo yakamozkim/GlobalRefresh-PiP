@@ -16,44 +16,12 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v4
 
-      - name: Enter pip_oc project folder
-        run: cd pip_oc
-        shell: bash
-
-      - name: List project files
+      # 打印仓库根目录全部文件，看工程在哪
+      - name: List repo root files
         run: ls -la
         shell: bash
 
-      # 打印出项目所有target，确认target名字
-      - name: Show project targets
-        run: xcodebuild -project GlobalRefresh-PiP.xcodeproj -list
+      # 打印pip_oc文件夹内部全部文件
+      - name: List pip_oc files
+        run: ls -la pip_oc
         shell: bash
-
-      # 直接用-target编译，绕过Scheme，关闭签名
-      - name: Xcode clean archive no‑sign
-        run: |
-          xcodebuild clean archive \
-            -project GlobalRefresh-PiP.xcodeproj \
-            -target GlobalRefresh-PiP \
-            -configuration Release \
-            -archivePath ./build/GlobalRefresh-PiP.xcarchive \
-            CODE_SIGN_IDENTITY="" \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO
-        shell: bash
-
-      - name: Export unsigned IPA
-        run: |
-          xcodebuild -exportArchive \
-            -archivePath ./build/GlobalRefresh-PiP.xcarchive \
-            -exportPath ./output \
-            -exportOptionsPlist ./exportOptions.plist
-        shell: bash
-
-      - name: Upload IPA artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: GlobalRefresh-PiP-Unsigned-IPA
-          path: pip_oc/output/*.ipa
-          retention-days: 14
-          if-no-files-found: warn
