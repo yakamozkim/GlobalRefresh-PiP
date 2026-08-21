@@ -1,0 +1,63 @@
+name: Build GlobalRefresh-PiP Unsigned IPA
+
+on:
+  push:
+    branches: ["master"]
+  pull_request:
+    branches: ["master"]
+  workflow_dispatch:
+
+jobs:
+  build_ios:
+    name: Build unsigned iOS IPA
+    runs-on: macos-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Enter pip_oc project folder
+        run: cd pip_oc
+        shell: bash
+
+      - name: Create shared scheme folder & copy scheme file
+        run: |
+          mkdir -p GlobalRefresh-PiP.xcodeproj/xcshareddata/xcschemes
+          cp scheme.tmp.xml GlobalRefresh-PiP.xcodeproj/xcshareddata/xcschemes/GlobalRefresh-PiP.xcscheme
+        shell: bash
+
+      - name: List project files
+        run: ls -la GlobalRefresh-PiP.xcodeproj
+        shell: bash
+
+      - name: Show available schemes
+        run: xcodebuild -list
+        shell: bash
+
+      - name: Xcode clean archive no-sign
+        run: |
+          xcodebuild clean archive \
+            -project GlobalRefresh-PiP.xcodeproj \
+            -scheme "GlobalRefresh-PiP" \
+            -configuration Release \
+            -archivePath ./build/GlobalRefresh-PiP.xcarchive \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
+        shell: bash
+
+      - name: Export unsigned IPA
+        run: |
+          xcodebuild -exportArchive \
+            -archivePath ./build/GlobalRefresh-PiP.xcarchive \
+            -exportPath ./output \
+            -exportOptionsPlist ./exportOptions.plist
+        shell: bash
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: GlobalRefresh-PiP-Unsigned-IPA
+          path: pip_oc/output/*.ipa
+          retention-days: 14
+          if-no-files-found: warn
